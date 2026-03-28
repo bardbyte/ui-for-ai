@@ -1,0 +1,347 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "ui-for-ai",
+  "homepage": "https://uiforai.dev",
+  "items": [
+    {
+      "name": "use-reduced-motion",
+      "type": "registry:hook",
+      "title": "useReducedMotion",
+      "description": "SSR-safe hook for respecting prefers-reduced-motion.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/hooks/use-reduced-motion.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-reduced-motion.ts"
+        }
+      ]
+    },
+    {
+      "name": "use-ai-state",
+      "type": "registry:hook",
+      "title": "useAIState",
+      "description": "Type-safe state machine for AI processing lifecycle with 7 semantic states.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/hooks/use-ai-state.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-ai-state.ts"
+        }
+      ]
+    },
+    {
+      "name": "use-streaming-buffer",
+      "type": "registry:hook",
+      "title": "useStreamingBuffer",
+      "description": "Decouples network jitter from visual token presentation with smooth buffering.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/hooks/use-streaming-buffer.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-streaming-buffer.ts"
+        }
+      ]
+    },
+    {
+      "name": "use-animated-number",
+      "type": "registry:hook",
+      "title": "useAnimatedNumber",
+      "description": "Spring-animated number transitions using Motion.",
+      "dependencies": ["motion"],
+      "files": [
+        {
+          "path": "registry/hooks/use-animated-number.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-animated-number.ts"
+        }
+      ]
+    },
+    {
+      "name": "streaming-text",
+      "type": "registry:ui",
+      "title": "Streaming Text",
+      "description": "Token-by-token text reveal with fade, blur-in, slide-up, and typewriter modes. Smooth buffering compatible with Vercel AI SDK.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-streaming-buffer", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/streaming-text.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/streaming-text.tsx"
+        }
+      ]
+    },
+    {
+      "name": "thinking-indicator",
+      "type": "registry:ui",
+      "title": "Thinking Indicator",
+      "description": "Multi-state AI indicator with 7 semantic states and smooth transitions. Not bouncing dots.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-ai-state", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/thinking-indicator.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/thinking-indicator.tsx"
+        }
+      ]
+    },
+    {
+      "name": "reasoning-trace",
+      "type": "registry:ui",
+      "title": "Reasoning Trace",
+      "description": "Collapsible chain-of-thought with spring animations. Auto-collapses when streaming completes.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["streaming-text", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/reasoning-trace.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/reasoning-trace.tsx"
+        }
+      ]
+    },
+    {
+      "name": "streaming-markdown",
+      "type": "registry:ui",
+      "title": "Streaming Markdown",
+      "description": "Markdown renderer that handles incomplete blocks during streaming without visual glitches.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-streaming-buffer", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/streaming-markdown.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/streaming-markdown.tsx"
+        }
+      ]
+    },
+    {
+      "name": "copy-button",
+      "type": "registry:ui",
+      "title": "Copy Button",
+      "description": "One-click copy with animated checkmark confirmation.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/copy-button.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/copy-button.tsx"
+        }
+      ]
+    },
+    {
+      "name": "ai-glow",
+      "type": "registry:ui",
+      "title": "AI Glow",
+      "description": "Ambient glow effect that responds to AI state with smooth color and intensity transitions.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-ai-state", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/ai-glow.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/ai-glow.tsx"
+        }
+      ]
+    },
+    {
+      "name": "grid-background",
+      "type": "registry:ui",
+      "title": "Grid Background",
+      "description": "Subtle animated dot/grid/cross background with radial gradient fade. Pure CSS, zero JS runtime.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/grid-background.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/grid-background.tsx"
+        }
+      ]
+    },
+    {
+      "name": "animated-tabs",
+      "type": "registry:ui",
+      "title": "Animated Tabs",
+      "description": "Tab navigation with sliding indicator and content cross-fade for AI output modes.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/animated-tabs.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/animated-tabs.tsx"
+        }
+      ]
+    },
+    {
+      "name": "streaming-layout",
+      "type": "registry:ui",
+      "title": "Streaming Layout",
+      "description": "Container that smoothly adjusts height as streaming content grows using spring physics.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/streaming-layout.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/streaming-layout.tsx"
+        }
+      ]
+    },
+    {
+      "name": "morph-container",
+      "type": "registry:ui",
+      "title": "Morph Container",
+      "description": "Smooth transitions between content views using View Transitions API with Motion fallback.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/morph-container.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/morph-container.tsx"
+        }
+      ]
+    },
+    {
+      "name": "artifact-pane",
+      "type": "registry:ui",
+      "title": "Artifact Pane",
+      "description": "Split-pane layout with animated resize handle and content-type indicators.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/artifact-pane.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/artifact-pane.tsx"
+        }
+      ]
+    },
+    {
+      "name": "agent-node",
+      "type": "registry:ui",
+      "title": "Agent Node",
+      "description": "React Flow-compatible node with semantic states and built-in pulse, ripple, glow animations.",
+      "dependencies": ["motion", "@xyflow/react"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/agent-node.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/agent-node.tsx"
+        }
+      ]
+    },
+    {
+      "name": "data-edge",
+      "type": "registry:ui",
+      "title": "Data Edge",
+      "description": "React Flow-compatible animated edge with flowing particles along the path.",
+      "dependencies": ["motion", "@xyflow/react"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/data-edge.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/data-edge.tsx"
+        }
+      ]
+    },
+    {
+      "name": "agent-timeline",
+      "type": "registry:ui",
+      "title": "Agent Timeline",
+      "description": "Vertical timeline of agent execution steps with live progress and expandable details.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/agent-timeline.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/agent-timeline.tsx"
+        }
+      ]
+    },
+    {
+      "name": "tool-call-card",
+      "type": "registry:ui",
+      "title": "Tool Call Card",
+      "description": "Shows tool invocation with animated expansion to reveal results. Status-aware transitions.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/tool-call-card.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/tool-call-card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "progress-ring",
+      "type": "registry:ui",
+      "title": "Progress Ring",
+      "description": "Circular progress indicator with spring physics for multi-step agent operations.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-animated-number", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/progress-ring.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/progress-ring.tsx"
+        }
+      ]
+    },
+    {
+      "name": "token-counter",
+      "type": "registry:ui",
+      "title": "Token Counter",
+      "description": "Animated token usage display with smooth number transitions and color-coded thresholds.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-animated-number", "use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/token-counter.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/token-counter.tsx"
+        }
+      ]
+    },
+    {
+      "name": "particle-field",
+      "type": "registry:ui",
+      "title": "Particle Field",
+      "description": "Interactive particle background using Canvas with mouse-responsive particles and connection lines.",
+      "dependencies": [],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/particle-field.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/particle-field.tsx"
+        }
+      ]
+    },
+    {
+      "name": "voice-waveform",
+      "type": "registry:ui",
+      "title": "Voice Waveform",
+      "description": "Real-time audio waveform visualization using Web Audio API and Canvas.",
+      "dependencies": [],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/voice-waveform.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/voice-waveform.tsx"
+        }
+      ]
+    }
+  ]
+}

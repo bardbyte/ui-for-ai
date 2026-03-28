@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useReducedMotion } from "../hooks/use-reduced-motion";
 
@@ -44,15 +44,34 @@ export function CitationCard({
 }: CitationCardProps) {
   const prefersReduced = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
+  const isHoveringRef = useRef(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const handleMouseEnter = useCallback(() => {
+    isHoveringRef.current = true;
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    setIsOpen(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    isHoveringRef.current = false;
+    closeTimeoutRef.current = setTimeout(() => {
+      if (!isHoveringRef.current) setIsOpen(false);
+    }, 150);
+  }, []);
+
+  const handleClick = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
 
   return (
     <span className={className} style={{ position: "relative", display: "inline" }}>
       {/* Superscript marker */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -87,8 +106,8 @@ export function CitationCard({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.96 }}
             transition={spring}
-            onMouseEnter={() => setIsOpen(true)}
-            onMouseLeave={() => setIsOpen(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             style={{
               position: "absolute",
               bottom: "calc(100% + 8px)",

@@ -28,10 +28,11 @@ export interface EmptyStateProps {
 
 const variantConfig: Record<
   NonNullable<EmptyStateProps["variant"]>,
-  { color: string; icon: ReactNode }
+  { color: string; glowColor: string; icon: ReactNode }
 > = {
   "no-data": {
     color: "oklch(0.72 0.14 250)",
+    glowColor: "oklch(0.72 0.14 250 / 0.1)",
     icon: (
       <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <rect x={3} y={3} width={18} height={18} rx={2} ry={2} />
@@ -42,6 +43,7 @@ const variantConfig: Record<
   },
   "no-results": {
     color: "oklch(0.78 0.14 75)",
+    glowColor: "oklch(0.78 0.14 75 / 0.1)",
     icon: (
       <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <circle cx={11} cy={11} r={8} />
@@ -52,6 +54,7 @@ const variantConfig: Record<
   },
   error: {
     color: "oklch(0.65 0.22 25)",
+    glowColor: "oklch(0.65 0.22 25 / 0.1)",
     icon: (
       <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <circle cx={12} cy={12} r={10} />
@@ -62,6 +65,7 @@ const variantConfig: Record<
   },
   "first-run": {
     color: "oklch(0.72 0.16 155)",
+    glowColor: "oklch(0.72 0.16 155 / 0.1)",
     icon: (
       <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -72,6 +76,7 @@ const variantConfig: Record<
   },
   offline: {
     color: "oklch(0.55 0.08 260)",
+    glowColor: "oklch(0.55 0.08 260 / 0.1)",
     icon: (
       <svg width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <line x1={1} y1={1} x2={23} y2={23} />
@@ -140,7 +145,7 @@ export function EmptyState({
             position: "absolute",
             inset: -16,
             borderRadius: 9999,
-            background: `radial-gradient(circle, ${config.color.replace(")", " / 0.1)")}, transparent 70%)`,
+            background: `radial-gradient(circle, ${config.glowColor}, transparent 70%)`,
             filter: "blur(12px)",
             pointerEvents: "none",
           }}

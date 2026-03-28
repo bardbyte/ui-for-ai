@@ -16,6 +16,13 @@ import { ToolCallCard } from "@/components/ui-for-ai/tool-call-card";
 import { ProgressRing } from "@/components/ui-for-ai/progress-ring";
 import { TokenCounter } from "@/components/ui-for-ai/token-counter";
 import { ParticleField } from "@/components/ui-for-ai/particle-field";
+import { EmptyState } from "@/components/ui-for-ai/empty-state";
+import { ErrorState } from "@/components/ui-for-ai/error-state";
+import { SkeletonBlock } from "@/components/ui-for-ai/skeleton-block";
+import { CitationCard } from "@/components/ui-for-ai/citation-card";
+import { MessageBranch } from "@/components/ui-for-ai/message-branch";
+import { ApprovalCard } from "@/components/ui-for-ai/approval-card";
+import { CodeArtifact } from "@/components/ui-for-ai/code-artifact";
 import type { AIState } from "@/hooks/use-ai-state";
 import type { AgentStatus } from "@/components/ui-for-ai/agent-node";
 
@@ -126,6 +133,7 @@ function StateButton({ label, active, onClick }: { label: string; active: boolea
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className="transition-all duration-200"
       style={{
         padding: "4px 10px",
@@ -360,6 +368,168 @@ function DataShowcase() {
 }
 
 // ---------------------------------------------------------------------------
+// Wave 2 Showcase Sections
+// ---------------------------------------------------------------------------
+
+function ApprovalShowcase() {
+  const [resolved, setResolved] = useState<"approved" | "rejected" | undefined>(undefined);
+
+  useEffect(() => {
+    if (resolved) {
+      const t = setTimeout(() => setResolved(undefined), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [resolved]);
+
+  return (
+    <Section title="Approval Card" sub="Human-in-the-loop. Agent proposes, user approves or rejects." delay={0.05}>
+      <div className="max-w-lg">
+        <ApprovalCard
+          title="Delete 3 inactive user accounts"
+          description="These accounts have not been accessed in 90+ days and have no active subscriptions."
+          impact="medium"
+          cost="Irreversible"
+          resolved={resolved}
+          onApprove={() => setResolved("approved")}
+          onReject={() => setResolved("rejected")}
+        >
+          <div style={{ fontSize: 12, color: "oklch(0.55 0.01 260)", fontFamily: "var(--font-geist-mono, monospace)" }}>
+            user_1042 (last active: 2025-12-01){"\n"}
+            user_1089 (last active: 2025-11-15){"\n"}
+            user_1103 (last active: 2025-10-28)
+          </div>
+        </ApprovalCard>
+      </div>
+    </Section>
+  );
+}
+
+function CitationShowcase() {
+  return (
+    <Section title="Citation Card" sub="Inline [1] markers for RAG. Hover to see the retrieved source chunk with relevance score." delay={0.05}>
+      <GlassCard label="Inline citations in AI response">
+        <p className="text-[14px] leading-[1.75]" style={{ color: "oklch(0.82 0.005 260)" }}>
+          The company reported strong Q3 earnings with revenue up 34%
+          <CitationCard index={1} title="Q3 Earnings Report" source="investor-relations.pdf" content="Revenue increased 34% year-over-year to $2.1B, driven primarily by enterprise adoption of the AI platform." score={0.94} page="12" />
+          {" "}driven by enterprise AI adoption. User retention improved significantly after the onboarding redesign
+          <CitationCard index={2} title="Product Analytics Dashboard" source="analytics.internal" content="30-day retention improved from 62% to 78% following the March onboarding redesign. Key factor: reduced time-to-first-value from 8 minutes to 2.5 minutes." score={0.87} />
+          {" "}with time-to-first-value dropping from 8 minutes to 2.5 minutes.
+        </p>
+      </GlassCard>
+    </Section>
+  );
+}
+
+function CodeArtifactShowcase() {
+  const sampleCode = `import { StreamingText } from "@/components/ui-for-ai/streaming-text";
+import { useChat } from "ai/react";
+
+export function Chat() {
+  const { messages, isLoading } = useChat();
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {messages.map((m) => (
+        <StreamingText
+          key={m.id}
+          content={m.content}
+          mode="luminous"
+          isStreaming={m.role === "assistant" && isLoading}
+        />
+      ))}
+    </div>
+  );
+}`;
+
+  return (
+    <Section title="Code Artifact" sub="Claude Artifacts-style code preview. Line numbers, copy, download, code/preview toggle." delay={0.05}>
+      <CodeArtifact
+        code={sampleCode}
+        language="typescript"
+        filename="chat.tsx"
+        preview={
+          <div style={{ padding: 16, fontSize: 13, color: "oklch(0.4 0 0)" }}>
+            Live preview of the chat component would render here.
+          </div>
+        }
+      />
+    </Section>
+  );
+}
+
+function SkeletonShowcase() {
+  return (
+    <Section title="Skeleton Block" sub="AI-aware loading skeletons. 5 variants matching common AI content types." delay={0.05}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <GlassCard label="message">
+          <SkeletonBlock variant="message" lines={3} />
+        </GlassCard>
+        <GlassCard label="code">
+          <SkeletonBlock variant="code" />
+        </GlassCard>
+        <GlassCard label="markdown">
+          <SkeletonBlock variant="markdown" lines={3} />
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}
+
+function EdgeStateShowcase() {
+  const [variant, setVariant] = useState<"no-data" | "no-results" | "error" | "first-run" | "offline">("first-run");
+  const [showError, setShowError] = useState(false);
+
+  return (
+    <Section title="Edge States" sub="The #2 vibe-coding complaint: missing loading, error, and empty states. Solved." delay={0.05}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GlassCard label="EmptyState — click variants">
+          <EmptyState
+            variant={variant}
+            title={variant === "first-run" ? "Welcome to your AI workspace" : variant === "no-results" ? "No matching results" : variant === "no-data" ? "No conversations yet" : variant === "error" ? "Something went wrong" : "You're offline"}
+            description={variant === "first-run" ? "Start a conversation to see your AI assistant in action." : "Try adjusting your search or filters."}
+            action={{ label: variant === "first-run" ? "Start chatting" : "Try again", onClick: () => {} }}
+          />
+          <div className="flex flex-wrap gap-2 justify-center mt-2">
+            {(["first-run", "no-data", "no-results", "error", "offline"] as const).map((v) => (
+              <StateButton key={v} label={v} active={v === variant} onClick={() => setVariant(v)} />
+            ))}
+          </div>
+        </GlassCard>
+        <GlassCard label="ErrorState">
+          <ErrorState
+            variant="server"
+            onRetry={() => { setShowError(true); setTimeout(() => setShowError(false), 2000); }}
+            isRetrying={showError}
+            details="Error: ECONNREFUSED 10.0.0.1:5432\n  at TCPConnectWrap.afterConnect\n  at PostgresClient.connect (pg.js:42:11)"
+          />
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}
+
+function MessageBranchShowcase() {
+  const [branch, setBranch] = useState(1);
+  const responses = [
+    "The best approach is to use a recursive algorithm with memoization, which gives O(n) time complexity.",
+    "I'd recommend an iterative dynamic programming solution. It uses O(1) space and is easier to debug.",
+    "Consider using a mathematical closed-form solution. For Fibonacci specifically, Binet's formula gives O(1) time.",
+  ];
+
+  return (
+    <Section title="Message Branch" sub="Response regeneration navigation. 'Show me another answer' with Previous/Next." delay={0.05}>
+      <GlassCard label="Regenerated responses — navigate between them">
+        <MessageBranch total={3} current={branch} onBranchChange={setBranch}>
+          <p className="text-[14px] leading-[1.75] py-2" style={{ color: "oklch(0.82 0.005 260)" }}>
+            {responses[branch - 1]}
+          </p>
+        </MessageBranch>
+      </GlassCard>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -405,7 +575,7 @@ export default function Home() {
                 background: "oklch(0.10 0.005 260 / 0.5)",
               }}
             >
-              19 components &middot; 4 hooks &middot; shadcn-compatible
+              28 components &middot; 4 hooks &middot; shadcn-compatible
             </motion.span>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -484,6 +654,14 @@ export default function Home() {
         <ToolCallShowcase />
         <GlowShowcase />
         <TabsShowcase />
+
+        {/* Wave 2: Structural Components */}
+        <ApprovalShowcase />
+        <CitationShowcase />
+        <CodeArtifactShowcase />
+        <SkeletonShowcase />
+        <EdgeStateShowcase />
+        <MessageBranchShowcase />
         <DataShowcase />
 
         {/* Footer */}

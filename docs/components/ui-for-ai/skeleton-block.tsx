@@ -12,12 +12,15 @@ export interface SkeletonBlockProps {
   className?: string;
 }
 
-const shimmerKeyframes = `
-@keyframes skeleton-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+// Injected once globally to avoid duplicate <style> tags
+let shimmerInjected = false;
+function ensureShimmerKeyframes() {
+  if (shimmerInjected || typeof document === "undefined") return;
+  const style = document.createElement("style");
+  style.textContent = `@keyframes skeleton-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }`;
+  document.head.appendChild(style);
+  shimmerInjected = true;
 }
-`;
 
 const shimmerBg =
   "linear-gradient(90deg, oklch(0.16 0.005 260) 25%, oklch(0.22 0.008 260) 50%, oklch(0.16 0.005 260) 75%)";
@@ -65,6 +68,7 @@ export function SkeletonBlock({
   className,
 }: SkeletonBlockProps) {
   const prefersReduced = useReducedMotion();
+  ensureShimmerKeyframes();
 
   // Pseudo-random widths for natural line variation
   const lineWidths = Array.from({ length: lines }, (_, i) => {
@@ -185,7 +189,6 @@ export function SkeletonBlock({
 
   return (
     <div className={className} role="status" aria-label="Loading content" aria-busy="true">
-      <style>{shimmerKeyframes}</style>
       {renderVariant()}
     </div>
   );

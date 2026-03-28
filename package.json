@@ -1,0 +1,35 @@
+{
+  "name": "ui-for-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Make AI interfaces feel alive. Drop-in animated components for streaming, thinking, agent workflows, and every AI state.",
+  "author": "ui-for-ai",
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm --filter docs dev",
+    "build": "pnpm --filter docs build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "prettier": "^3.4.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

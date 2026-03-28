@@ -78,14 +78,22 @@ function useSimulatedStream(text: string, speed = 12) {
 
 function Section({ title, sub, children, delay = 0 }: { title: string; sub: string; children: React.ReactNode; delay?: number }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, margin: "-40px", amount: 0.1 });
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Before hydration, render visible. After hydration, animate.
+  const shouldAnimate = hasMounted;
 
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
-      animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      initial={shouldAnimate ? { opacity: 0, y: 30, filter: "blur(4px)" } : false}
+      animate={!shouldAnimate || inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
       className="mb-28"
     >
       <div className="mb-6">
@@ -565,7 +573,7 @@ export default function Home() {
           </div>
           <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-36 pb-24">
             <motion.span
-              initial={{ opacity: 0, y: 10 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-[10px] font-mono uppercase tracking-[0.15em] rounded-full px-4 py-1.5 mb-8"
@@ -578,7 +586,7 @@ export default function Home() {
               28 components &middot; 4 hooks &middot; shadcn-compatible
             </motion.span>
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="text-6xl md:text-8xl font-bold tracking-[-0.035em] mb-4"
@@ -591,7 +599,7 @@ export default function Home() {
               ui-for-ai
             </motion.h1>
             <motion.p
-              initial={{ opacity: 0, y: 15 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.35 }}
               className="text-lg md:text-xl mb-2"
@@ -600,7 +608,7 @@ export default function Home() {
               Make AI interfaces feel alive.
             </motion.p>
             <motion.p
-              initial={{ opacity: 0 }}
+              initial={false}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
               className="text-[13px] max-w-md mb-10"
@@ -609,7 +617,7 @@ export default function Home() {
               Drop-in animated components for streaming, thinking, agent workflows, and every AI state. Copy-paste. Zero lock-in.
             </motion.p>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
               className="flex items-center gap-3 flex-wrap justify-center"

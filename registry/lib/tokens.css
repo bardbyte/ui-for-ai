@@ -1,0 +1,57 @@
+/* ui-for-ai Design Tokens
+ * Import this file once in your globals.css:
+ *   @import "ui-for-ai/tokens.css";
+ * Or copy these variables into your existing :root block.
+ */
+
+:root,
+.dark {
+  /* --- Brand Palette (oklch) --- */
+  --uai-primary: oklch(0.72 0.14 250);
+  --uai-primary-muted: oklch(0.72 0.14 250 / 0.15);
+  --uai-violet: oklch(0.65 0.20 280);
+  --uai-cyan: oklch(0.78 0.12 200);
+  --uai-success: oklch(0.72 0.16 155);
+  --uai-error: oklch(0.65 0.22 25);
+  --uai-warning: oklch(0.78 0.14 75);
+
+  /* --- Surfaces --- */
+  --uai-bg: oklch(0.08 0.005 260);
+  --uai-surface: oklch(0.12 0.005 260);
+  --uai-surface-elevated: oklch(0.16 0.005 260);
+  --uai-surface-glass: oklch(0.14 0.008 260 / 0.9);
+
+  /* --- Text --- */
+  --uai-text: oklch(0.93 0.005 260);
+  --uai-text-secondary: oklch(0.62 0.01 260);
+  --uai-text-muted: oklch(0.45 0.01 260);
+  --uai-text-ghost: oklch(0.32 0.01 260);
+
+  /* --- Borders --- */
+  --uai-border: oklch(0.22 0.01 260 / 0.4);
+  --uai-border-hover: oklch(0.30 0.02 260 / 0.5);
+
+  /* --- Radii --- */
+  --uai-radius-sm: 8px;
+  --uai-radius-md: 12px;
+  --uai-radius-lg: 16px;
+
+  /* --- Shadows --- */
+  --uai-shadow-glass:
+    inset 0 1px 0 oklch(1.0 0 0 / 0.04),
+    inset 0 -1px 0 oklch(0 0 0 / 0.15),
+    0 2px 4px oklch(0 0 0 / 0.2),
+    0 8px 24px oklch(0 0 0 / 0.15);
+}
+
+/* Light mode overrides */
+.light {
+  --uai-bg: oklch(0.98 0.005 260);
+  --uai-surface: oklch(0.96 0.005 260);
+  --uai-surface-elevated: oklch(0.94 0.005 260);
+  --uai-surface-glass: oklch(0.98 0.005 260 / 0.8);
+  --uai-text: oklch(0.12 0.005 260);
+  --uai-text-secondary: oklch(0.40 0.01 260);
+  --uai-text-muted: oklch(0.55 0.01 260);
+  --uai-border: oklch(0.80 0.01 260 / 0.3);
+}

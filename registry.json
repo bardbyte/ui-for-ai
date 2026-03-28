@@ -4,6 +4,34 @@
   "homepage": "https://uiforai.dev",
   "items": [
     {
+      "name": "tokens",
+      "type": "registry:style",
+      "title": "Design Tokens",
+      "description": "CSS custom properties for theming. Import once in globals.css.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/lib/tokens.css",
+          "type": "registry:style",
+          "target": "styles/ui-for-ai-tokens.css"
+        }
+      ]
+    },
+    {
+      "name": "motion-presets",
+      "type": "registry:lib",
+      "title": "Motion Presets",
+      "description": "Shared spring, easing, and duration presets for consistent animations.",
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/lib/motion-presets.ts",
+          "type": "registry:lib",
+          "target": "lib/motion-presets.ts"
+        }
+      ]
+    },
+    {
       "name": "use-reduced-motion",
       "type": "registry:hook",
       "title": "useReducedMotion",

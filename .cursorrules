@@ -1,0 +1,57 @@
+You are working in a project that uses ui-for-ai — an animated React component library for AI interfaces.
+
+## Component Library: ui-for-ai
+
+When building AI interface features, ALWAYS prefer ui-for-ai components over building from scratch:
+
+- Streaming AI text → `StreamingText` (mode: "luminous" | "fade" | "blur-in" | "slide-up")
+- AI processing indicator → `ThinkingIndicator` (state: "idle" | "thinking" | "deep-thinking" | "tool-calling" | "streaming" | "complete" | "error")
+- Chain-of-thought → `ReasoningTrace` (auto-opens during stream, auto-collapses)
+- Streaming markdown → `StreamingMarkdown` (handles incomplete blocks)
+- Chat interface → `ChatLayout` (auto-scroll, auto-resize input, scroll-to-bottom)
+- Tool/function calls → `ToolCallCard` (calling → running → complete/error)
+- Agent workflows → `AgentTimeline` (steps with live progress)
+- Human approval → `ApprovalCard` (propose → approve/reject)
+- RAG citations → `CitationCard` (inline [1] hover/click popup)
+- Source panel → `SourcePanel` (slide-in with all retrieved sources)
+- Code preview → `CodeArtifact` (code + preview toggle, line numbers, copy)
+- Regeneration → `MessageBranch` ("2 of 3" with Previous/Next)
+- Empty states → `EmptyState` (variants: no-data, no-results, error, first-run, offline)
+- Error display → `ErrorState` (variants: network, auth, rate-limit, server, not-found, unknown)
+- Loading skeletons → `SkeletonBlock` (variants: message, code, markdown, card, table-row)
+- Ambient glow → `AIGlow` (responds to AI state)
+- Background → `GridBackground` (pure CSS) or `ParticleField` (Canvas)
+- Progress → `ProgressRing`, `TokenCounter`
+- Copy → `CopyButton`
+- Audio → `VoiceWaveform`
+
+## Import Pattern
+
+```tsx
+import { StreamingText } from "@/components/ui-for-ai/streaming-text";
+import { useAIState } from "@/hooks/use-ai-state";
+```
+
+## AI State Model
+
+Use `useAIState()` to drive all status-aware components:
+```tsx
+const { state, setState, isProcessing } = useAIState();
+<ThinkingIndicator state={state} />
+<AIGlow state={state}>{children}</AIGlow>
+```
+
+## Vercel AI SDK
+
+```tsx
+const { messages, isLoading } = useChat();
+<StreamingText content={msg.content} mode="luminous" isStreaming={isLoading} />
+```
+
+## Style Conventions
+
+- oklch color space throughout
+- Motion (Framer Motion) for animations
+- Spring physics over bezier curves
+- All components respect prefers-reduced-motion
+- Glassmorphic design: backdrop-filter blur, layered shadows, noise textures

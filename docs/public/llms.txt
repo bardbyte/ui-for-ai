@@ -1,0 +1,51 @@
+# ui-for-ai
+
+> Drop-in animated React components for AI interfaces. 28 components + 4 hooks for streaming, thinking, agent workflows, and every AI state. shadcn-compatible registry. Copy-paste. Zero lock-in.
+
+## Docs
+
+- [StreamingText](/docs/streaming-text): Token-by-token text reveal with luminous, fade, blur-in, slide-up modes
+- [ThinkingIndicator](/docs/thinking-indicator): 7-state glassmorphic orb (idle/thinking/deep-thinking/tool-calling/streaming/complete/error)
+- [ReasoningTrace](/docs/reasoning-trace): Collapsible chain-of-thought, auto-opens during streaming
+- [StreamingMarkdown](/docs/streaming-markdown): Markdown renderer handling incomplete blocks during streaming
+- [ChatLayout](/docs/chat-layout): Full chat interface with auto-scroll, auto-resize input, scroll-to-bottom
+- [AgentTimeline](/docs/agent-timeline): Vertical step timeline with live progress indicators
+- [ToolCallCard](/docs/tool-call-card): Tool invocation with chromatic shimmer and expanding results
+- [ApprovalCard](/docs/approval-card): Human-in-the-loop approval with impact levels
+- [CitationCard](/docs/citation-card): Inline RAG citation markers with hover popup
+- [SourcePanel](/docs/source-panel): Slide-in panel showing all retrieved RAG sources
+- [CodeArtifact](/docs/code-artifact): Code + live preview panel (Claude Artifacts-style)
+- [MessageBranch](/docs/message-branch): Response regeneration navigation ("2 of 3")
+- [EmptyState](/docs/empty-state): Edge state component (no-data/no-results/error/first-run/offline)
+- [ErrorState](/docs/error-state): Graceful error display with retry and collapsible details
+- [SkeletonBlock](/docs/skeleton-block): AI-aware loading skeletons (message/code/markdown/card/table-row)
+- [AIGlow](/docs/ai-glow): 3-blob ambient glow responding to AI state
+- [GridBackground](/docs/grid-background): Dot/grid/cross pattern background (pure CSS)
+- [ParticleField](/docs/particle-field): Interactive Canvas particle background
+- [ProgressRing](/docs/progress-ring): Circular progress with spring physics
+- [TokenCounter](/docs/token-counter): Animated token usage with color thresholds
+- [VoiceWaveform](/docs/voice-waveform): Real-time audio waveform visualization
+- [CopyButton](/docs/copy-button): Clipboard copy with animated checkmark
+- [AgentNode](/docs/agent-node): React Flow node with glassmorphic status animations
+- [DataEdge](/docs/data-edge): React Flow edge with flowing particles
+- [AnimatedTabs](/docs/animated-tabs): Tab navigation with sliding indicator
+- [MorphContainer](/docs/morph-container): Smooth view transition container
+- [ArtifactPane](/docs/artifact-pane): Split-pane layout with animated resize
+- [StreamingLayout](/docs/streaming-layout): Auto-resizing container for streaming content
+
+## Hooks
+
+- [useAIState](/docs/use-ai-state): Type-safe 7-state AI lifecycle machine
+- [useStreamingBuffer](/docs/use-streaming-buffer): Decouples network jitter from visual token presentation
+- [useReducedMotion](/docs/use-reduced-motion): SSR-safe prefers-reduced-motion detection
+- [useAnimatedNumber](/docs/use-animated-number): Spring-animated number transitions
+
+## Installation
+
+```
+npx shadcn@latest add https://uiforai.dev/r/streaming-text.json
+```
+
+## Optional
+
+- [llms-full.txt](/llms-full.txt): Complete documentation with all props and code examples

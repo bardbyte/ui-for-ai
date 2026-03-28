@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { motion, useInView } from "motion/react";
 import { StreamingText } from "@/components/ui-for-ai/streaming-text";
 import { ThinkingIndicator } from "@/components/ui-for-ai/thinking-indicator";
 import { ReasoningTrace } from "@/components/ui-for-ai/reasoning-trace";
@@ -18,8 +19,12 @@ import { ParticleField } from "@/components/ui-for-ai/particle-field";
 import type { AIState } from "@/hooks/use-ai-state";
 import type { AgentStatus } from "@/components/ui-for-ai/agent-node";
 
+// ---------------------------------------------------------------------------
+// Shared
+// ---------------------------------------------------------------------------
+
 const DEMO_TEXT =
-  "The architecture uses a multi-agent pipeline where each agent specializes in a specific task. The orchestrator routes requests based on intent classification, then aggregates results through a consensus mechanism.";
+  "The architecture uses a multi-agent pipeline where each agent specializes in a specific task. The orchestrator routes requests based on intent classification, then aggregates results through a consensus mechanism that weighs confidence scores.";
 
 const DEMO_MARKDOWN = `## Analysis Complete
 
@@ -35,18 +40,16 @@ def analyze(data):
     return trends.summary()
 \`\`\`
 
-> The most significant finding is the correlation between onboarding and retention.`;
+> The most significant finding is the correlation between onboarding completion and 90-day retention.`;
 
 function useSimulatedStream(text: string, speed = 12) {
   const [content, setContent] = useState("");
   const [isStreaming, setIsStreaming] = useState(true);
-
   useEffect(() => {
     let i = 0;
     setContent("");
     setIsStreaming(true);
     const words = text.split(" ");
-
     const interval = setInterval(() => {
       if (i < words.length) {
         setContent(words.slice(0, i + 1).join(" "));
@@ -57,252 +60,441 @@ function useSimulatedStream(text: string, speed = 12) {
         setTimeout(() => { i = 0; setContent(""); setIsStreaming(true); }, 4000);
       }
     }, 1000 / speed);
-
     return () => clearInterval(interval);
   }, [text, speed]);
-
   return { content, isStreaming };
 }
 
-function Section({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) {
+// ---------------------------------------------------------------------------
+// Layout primitives — glassmorphic, scroll-revealed
+// ---------------------------------------------------------------------------
+
+function Section({ title, sub, children, delay = 0 }: { title: string; sub: string; children: React.ReactNode; delay?: number }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
   return (
-    <section className="mb-20">
-      <h2 className="text-xl font-semibold text-white mb-1">{title}</h2>
-      <p className="text-xs text-neutral-500 mb-6">{sub}</p>
+    <motion.section
+      ref={ref}
+      initial={{ opacity: 0, y: 40, filter: "blur(6px)" }}
+      animate={inView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="mb-28"
+    >
+      <div className="mb-6">
+        <h2 className="text-[22px] font-semibold tracking-[-0.02em]" style={{ color: "oklch(0.93 0.005 260)" }}>
+          {title}
+        </h2>
+        <p className="text-[13px] mt-1" style={{ color: "oklch(0.45 0.01 260)" }}>{sub}</p>
+      </div>
       {children}
-    </section>
+    </motion.section>
   );
 }
 
-function Card({ label, children }: { label: string; children: React.ReactNode }) {
+function GlassCard({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-5">
-      <div className="text-[10px] font-mono text-neutral-600 mb-3 uppercase tracking-wider">{label}</div>
+    <div
+      className={className}
+      style={{
+        borderRadius: 16,
+        padding: "20px 20px 24px",
+        background: "linear-gradient(135deg, oklch(0.14 0.008 260 / 0.9), oklch(0.10 0.005 260 / 0.8))",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        border: "1px solid oklch(0.22 0.01 260 / 0.4)",
+        boxShadow: [
+          "inset 0 1px 0 oklch(1.0 0 0 / 0.04)",
+          "inset 0 -1px 0 oklch(0 0 0 / 0.15)",
+          "0 2px 4px oklch(0 0 0 / 0.2)",
+          "0 8px 24px oklch(0 0 0 / 0.15)",
+        ].join(", "),
+      }}
+    >
+      <div
+        className="mb-4 uppercase tracking-[0.12em] font-medium"
+        style={{ fontSize: 10, color: "oklch(0.40 0.02 260)" }}
+      >
+        {label}
+      </div>
       {children}
     </div>
   );
 }
 
-export default function Home() {
-  // Streaming demos
-  const fade = useSimulatedStream(DEMO_TEXT, 10);
+function StateButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="transition-all duration-200"
+      style={{
+        padding: "4px 10px",
+        borderRadius: 6,
+        fontSize: 10,
+        fontFamily: "var(--font-geist-mono), monospace",
+        border: `1px solid ${active ? "oklch(0.72 0.14 250 / 0.3)" : "oklch(0.20 0.01 260 / 0.5)"}`,
+        background: active ? "oklch(0.72 0.14 250 / 0.1)" : "oklch(0.10 0.005 260 / 0.5)",
+        color: active ? "oklch(0.78 0.12 250)" : "oklch(0.45 0.01 260)",
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section demos
+// ---------------------------------------------------------------------------
+
+function StreamingShowcase() {
+  const luminous = useSimulatedStream(DEMO_TEXT, 10);
   const blur = useSimulatedStream(DEMO_TEXT, 10);
   const slide = useSimulatedStream(DEMO_TEXT, 10);
-  const md = useSimulatedStream(DEMO_MARKDOWN, 6);
 
-  // Thinking indicator state cycling
-  const [thinkIdx, setThinkIdx] = useState(0);
-  const thinkStates: AIState[] = ["thinking", "deep-thinking", "tool-calling", "streaming", "complete", "error"];
-  useEffect(() => { const t = setInterval(() => setThinkIdx((i) => (i + 1) % thinkStates.length), 2200); return () => clearInterval(t); }, [thinkStates.length]);
+  return (
+    <Section title="Streaming Text" sub="Text materializes from light. A glowing wavefront travels with the stream. 4 modes.">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <GlassCard label="luminous (default)">
+          <StreamingText content={luminous.content} mode="luminous" isStreaming={luminous.isStreaming} className="text-[14px] leading-[1.75]" />
+        </GlassCard>
+        <GlassCard label="blur-in">
+          <StreamingText content={blur.content} mode="blur-in" isStreaming={blur.isStreaming} className="text-[14px] leading-[1.75]"  />
+        </GlassCard>
+        <GlassCard label="slide-up">
+          <StreamingText content={slide.content} mode="slide-up" isStreaming={slide.isStreaming} className="text-[14px] leading-[1.75]"  />
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}
 
-  // Reasoning trace
-  const reasoning = useSimulatedStream(
-    "Let me analyze this step by step. First, I need to check the database schema. The users table has a foreign key to organizations. The query needs to join three tables and filter by date range. I should use a CTE for clarity. The key insight is aggregating at the project level first.",
+function ThinkingShowcase() {
+  const [idx, setIdx] = useState(0);
+  const states: AIState[] = ["thinking", "deep-thinking", "tool-calling", "streaming", "complete", "error"];
+  useEffect(() => { const t = setInterval(() => setIdx((i) => (i + 1) % states.length), 2500); return () => clearInterval(t); }, [states.length]);
+
+  return (
+    <Section title="Thinking Indicator" sub="A glassmorphic orb with rotating inner layers. Not three bouncing dots." delay={0.05}>
+      <GlassCard label="Click any state — or watch it cycle">
+        <div className="flex items-center justify-center py-6">
+          <ThinkingIndicator state={states[idx]!} size="lg" />
+        </div>
+        <div className="flex flex-wrap gap-2 justify-center mt-4">
+          {states.map((s, i) => (
+            <StateButton key={s} label={s} active={s === states[idx]} onClick={() => setIdx(i)} />
+          ))}
+        </div>
+      </GlassCard>
+    </Section>
+  );
+}
+
+function ReasoningShowcase() {
+  const stream = useSimulatedStream(
+    "Let me analyze step by step. First, I need to check the database schema. The users table has a foreign key to organizations. The query needs to join three tables, filter by date range, and use a CTE for clarity. The key insight is aggregating at the project level first, then rolling up.",
     8,
   );
+  return (
+    <Section title="Reasoning Trace" sub="Collapsible chain-of-thought. Auto-opens during streaming, auto-collapses when done." delay={0.05}>
+      <GlassCard label="Live streaming reasoning">
+        <ReasoningTrace content={stream.content} isStreaming={stream.isStreaming} durationSeconds={stream.isStreaming ? undefined : 8} />
+      </GlassCard>
+    </Section>
+  );
+}
 
-  // Agent workflow
-  const [agentStep, setAgentStep] = useState(0);
-  useEffect(() => { const t = setInterval(() => setAgentStep((s) => (s + 1) % 4), 2500); return () => clearInterval(t); }, []);
-  const nodeMap: Record<number, { p: AgentStatus; s: AgentStatus; g: AgentStatus }> = {
+function MarkdownShowcase() {
+  const md = useSimulatedStream(DEMO_MARKDOWN, 6);
+  return (
+    <Section title="Streaming Markdown" sub="Renders incomplete markdown without glitches. Unclosed code blocks show a blinking cursor." delay={0.05}>
+      <GlassCard label="Markdown with code blocks streaming in">
+        <StreamingMarkdown content={md.content} isStreaming={md.isStreaming} className="text-[14px]"  />
+      </GlassCard>
+    </Section>
+  );
+}
+
+function AgentShowcase() {
+  const [step, setStep] = useState(0);
+  useEffect(() => { const t = setInterval(() => setStep((s) => (s + 1) % 4), 2500); return () => clearInterval(t); }, []);
+  const m: Record<number, { p: AgentStatus; s: AgentStatus; g: AgentStatus }> = {
     0: { p: "running", s: "idle", g: "idle" },
     1: { p: "success", s: "running", g: "idle" },
     2: { p: "success", s: "success", g: "running" },
     3: { p: "success", s: "success", g: "success" },
   };
-  const ns = nodeMap[agentStep] ?? nodeMap[0]!;
+  const ns = m[step] ?? m[0]!;
 
-  // Tool call
-  const [toolStatus, setToolStatus] = useState<"calling" | "running" | "complete">("calling");
+  return (
+    <Section title="Agent Workflow" sub="Glassmorphic nodes with rotating conic borders, edge-bleed glow, and live timeline." delay={0.05}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GlassCard label="AgentNode — hover for shine sweep">
+          <div className="flex flex-col gap-4 py-2">
+            <AgentNode label="Parse Query" status={ns.p} icon="Q" />
+            <AgentNode label="Search KB" subtitle="vector search" status={ns.s} icon="S" />
+            <AgentNode label="Generate" status={ns.g} icon="G" />
+          </div>
+        </GlassCard>
+        <GlassCard label="AgentTimeline">
+          <AgentTimeline steps={[
+            { id: "1", title: "Parse user query", status: step >= 1 ? "complete" : "running" },
+            { id: "2", title: "Search knowledge base", status: step >= 2 ? "complete" : step === 1 ? "running" : "pending" },
+            { id: "3", title: "Generate response", status: step >= 3 ? "complete" : step === 2 ? "running" : "pending" },
+            { id: "4", title: "Validate output", status: step >= 3 ? "complete" : "pending" },
+          ]} />
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}
+
+function ToolCallShowcase() {
+  const [status, setStatus] = useState<"calling" | "running" | "complete">("calling");
   useEffect(() => {
     const seq: Array<"calling" | "running" | "complete"> = ["calling", "running", "complete"];
     let i = 0;
-    const t = setInterval(() => { i = (i + 1) % seq.length; setToolStatus(seq[i]!); }, 2000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Glow state
-  const [glowState, setGlowState] = useState<AIState>("thinking");
-
-  // Tabs
-  const [activeTab, setActiveTab] = useState("response");
-
-  // Data
-  const [progress, setProgress] = useState(0);
-  const [tokens, setTokens] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setProgress((p) => (p >= 100 ? 0 : p + 1.5));
-      setTokens((t) => (t >= 4096 ? 500 : t + Math.floor(Math.random() * 50) + 10));
-    }, 120);
+    const t = setInterval(() => { i = (i + 1) % seq.length; setStatus(seq[i]!); }, 2000);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
-      {/* Hero */}
-      <div className="relative overflow-hidden" style={{ minHeight: 480 }}>
-        <GridBackground variant="dots" fade fadeDirection="center">
-          <div className="absolute inset-0">
-            <ParticleField count={35} color="rgba(100, 140, 255, 0.2)" connectionDistance={100} speed={0.4} className="w-full h-full" />
+    <Section title="Tool Call Card" sub="Chromatic shimmer while running. Two-phase spring expansion reveals results." delay={0.05}>
+      <div className="max-w-md">
+        <ToolCallCard
+          toolName="search_database"
+          icon="DB"
+          args={{ query: "recent orders", limit: 10 }}
+          status={status}
+          result={status === "complete" ? (
+            <pre className="text-[11px] font-mono" style={{ color: "oklch(0.6 0.01 260)" }}>
+              {JSON.stringify({ results: [{ id: 1, item: "Widget A" }, { id: 2, item: "Widget B" }], count: 2 }, null, 2)}
+            </pre>
+          ) : undefined}
+        />
+      </div>
+    </Section>
+  );
+}
+
+function GlowShowcase() {
+  const [glowState, setGlowState] = useState<AIState>("thinking");
+  return (
+    <Section title="AI Glow" sub="Three independently-moving blobs with mix-blend-mode: screen. Noise texture overlay for organic feel." delay={0.05}>
+      <GlassCard label="Click states to see the aurora shift">
+        <div className="relative rounded-xl overflow-hidden" style={{ height: 200, background: "oklch(0.08 0.005 260)" }}>
+          <AIGlow state={glowState} intensity={0.8}>
+            <div className="flex items-center justify-center h-full">
+              <span className="font-mono text-sm" style={{ color: "oklch(0.5 0.01 260)" }}>
+                state: &quot;{glowState}&quot;
+              </span>
+            </div>
+          </AIGlow>
+        </div>
+        <div className="flex flex-wrap gap-2 justify-center mt-4">
+          {(["idle", "thinking", "deep-thinking", "streaming", "complete", "error"] as AIState[]).map((s) => (
+            <StateButton key={s} label={s} active={s === glowState} onClick={() => setGlowState(s)} />
+          ))}
+        </div>
+      </GlassCard>
+    </Section>
+  );
+}
+
+function TabsShowcase() {
+  const [tab, setTab] = useState("response");
+  return (
+    <Section title="Animated Tabs" sub="Sliding indicator with spring physics. Content cross-fades on switch." delay={0.05}>
+      <GlassCard label="AnimatedTabs">
+        <AnimatedTabs
+          tabs={[{ id: "response", label: "Response" }, { id: "code", label: "Code" }, { id: "preview", label: "Preview" }]}
+          activeTab={tab}
+          onTabChange={setTab}
+        >
+          <div className="p-5 text-[14px] min-h-[72px]" style={{ color: "oklch(0.65 0.01 260)" }}>
+            {tab === "response" && "The AI response with streaming text would appear here, word by word..."}
+            {tab === "code" && <pre className="font-mono text-xs" style={{ color: "oklch(0.72 0.16 155)" }}>{"function hello() {\n  return 'world';\n}"}</pre>}
+            {tab === "preview" && "Live preview of the generated component renders here."}
           </div>
-          <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 pt-32 pb-20">
-            <span className="text-[10px] font-mono text-neutral-500 border border-neutral-800 rounded-full px-3 py-1 mb-6 uppercase tracking-widest">
+        </AnimatedTabs>
+      </GlassCard>
+    </Section>
+  );
+}
+
+function DataShowcase() {
+  const [progress, setProgress] = useState(0);
+  const [tokens, setTokens] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setProgress((p) => (p >= 100 ? 0 : p + 1.2));
+      setTokens((v) => (v >= 4096 ? 400 : v + Math.floor(Math.random() * 40) + 10));
+    }, 100);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <Section title="Data & Feedback" sub="Spring-animated numbers. Progress rings with smooth arc fill. Color-coded token thresholds." delay={0.05}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <GlassCard label="ProgressRing">
+          <div className="flex justify-center py-5">
+            <ProgressRing progress={Math.min(progress, 100)} currentStep={Math.ceil(Math.min(progress, 100) / 20)} totalSteps={5} size={80} strokeWidth={5} />
+          </div>
+        </GlassCard>
+        <GlassCard label="TokenCounter">
+          <div className="py-5">
+            <TokenCounter value={Math.min(tokens, 4096)} max={4096} label="tokens" />
+          </div>
+        </GlassCard>
+        <GlassCard label="CopyButton">
+          <div className="flex items-center gap-3 py-5">
+            <code className="text-[10px] bg-black/30 px-3 py-2 rounded-lg font-mono truncate" style={{ color: "oklch(0.50 0.01 260)" }}>
+              npx shadcn add streaming-text
+            </code>
+            <CopyButton value="npx shadcn@latest add https://uiforai.dev/r/streaming-text.json" />
+          </div>
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default function Home() {
+  return (
+    <div className="min-h-screen selection:bg-blue-500/20" style={{ background: "oklch(0.06 0.005 260)", color: "oklch(0.93 0.005 260)" }}>
+
+      {/* Fixed ambient gradient blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        <div
+          className="absolute"
+          style={{
+            top: "-20%", left: "-10%", width: "60%", height: "60%",
+            background: "radial-gradient(ellipse, oklch(0.72 0.14 250 / 0.04), transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            bottom: "-10%", right: "-15%", width: "50%", height: "50%",
+            background: "radial-gradient(ellipse, oklch(0.65 0.20 280 / 0.03), transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+      </div>
+
+      {/* Hero */}
+      <div className="relative overflow-hidden" style={{ minHeight: 520, zIndex: 1 }}>
+        <GridBackground variant="dots" color="oklch(0.35 0.02 260 / 0.15)" fade fadeDirection="center">
+          <div className="absolute inset-0">
+            <ParticleField count={30} color="rgba(100, 140, 255, 0.15)" connectionDistance={100} speed={0.3} className="w-full h-full" />
+          </div>
+          <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-36 pb-24">
+            <motion.span
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-[10px] font-mono uppercase tracking-[0.15em] rounded-full px-4 py-1.5 mb-8"
+              style={{
+                color: "oklch(0.50 0.02 260)",
+                border: "1px solid oklch(0.20 0.01 260 / 0.5)",
+                background: "oklch(0.10 0.005 260 / 0.5)",
+              }}
+            >
               19 components &middot; 4 hooks &middot; shadcn-compatible
-            </span>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-3">ui-for-ai</h1>
-            <p className="text-lg text-neutral-400 mb-2">Make AI interfaces feel alive.</p>
-            <p className="text-sm text-neutral-600 max-w-md mb-8">
-              Drop-in animated components for streaming, thinking, agent workflows, and every AI state.
-            </p>
-            <div className="flex items-center gap-3 flex-wrap justify-center">
-              <a href="https://github.com/AashishNandakumar/ui-for-ai" className="px-5 py-2 bg-white text-black rounded-lg font-medium text-sm hover:bg-neutral-200 transition-colors">
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="text-6xl md:text-8xl font-bold tracking-[-0.035em] mb-4"
+              style={{
+                background: "linear-gradient(180deg, oklch(0.97 0.005 260), oklch(0.60 0.01 260))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              ui-for-ai
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="text-lg md:text-xl mb-2"
+              style={{ color: "oklch(0.55 0.01 260)" }}
+            >
+              Make AI interfaces feel alive.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="text-[13px] max-w-md mb-10"
+              style={{ color: "oklch(0.38 0.01 260)" }}
+            >
+              Drop-in animated components for streaming, thinking, agent workflows, and every AI state. Copy-paste. Zero lock-in.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="flex items-center gap-3 flex-wrap justify-center"
+            >
+              <a
+                href="https://github.com/bardbyte/ui-for-ai"
+                className="px-6 py-2.5 rounded-xl font-medium text-sm transition-all duration-200"
+                style={{
+                  background: "oklch(0.95 0.005 260)",
+                  color: "oklch(0.08 0.005 260)",
+                }}
+              >
                 GitHub
               </a>
-              <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2">
-                <code className="text-[11px] text-neutral-400 font-mono">npx shadcn add streaming-text</code>
+              <div
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5"
+                style={{
+                  background: "oklch(0.10 0.005 260 / 0.8)",
+                  border: "1px solid oklch(0.20 0.01 260 / 0.4)",
+                }}
+              >
+                <code className="text-[11px] font-mono" style={{ color: "oklch(0.50 0.02 260)" }}>
+                  npx shadcn add streaming-text
+                </code>
                 <CopyButton value="npx shadcn@latest add https://uiforai.dev/r/streaming-text.json" />
               </div>
-            </div>
+            </motion.div>
           </div>
         </GridBackground>
       </div>
 
-      {/* Components */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      {/* Gradient divider */}
+      <div className="h-px mx-auto max-w-4xl" style={{ background: "linear-gradient(90deg, transparent, oklch(0.25 0.02 260 / 0.5), transparent)" }} />
 
-        {/* Streaming Text */}
-        <Section title="Streaming Text" sub="Token-by-token reveal with 4 animation modes. Buffer decouples network jitter from visuals.">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Card label="fade">
-              <StreamingText content={fade.content} mode="fade" isStreaming={fade.isStreaming} className="text-sm text-neutral-300 leading-relaxed" />
-            </Card>
-            <Card label="blur-in">
-              <StreamingText content={blur.content} mode="blur-in" isStreaming={blur.isStreaming} className="text-sm text-neutral-300 leading-relaxed" />
-            </Card>
-            <Card label="slide-up">
-              <StreamingText content={slide.content} mode="slide-up" isStreaming={slide.isStreaming} className="text-sm text-neutral-300 leading-relaxed" />
-            </Card>
-          </div>
-        </Section>
-
-        {/* Thinking Indicator */}
-        <Section title="Thinking Indicator" sub="7 semantic states. Not bouncing dots.">
-          <Card label="Click to change state">
-            <div className="flex items-center gap-6 py-3 mb-4">
-              <ThinkingIndicator state={thinkStates[thinkIdx]!} size="lg" />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {thinkStates.map((s, i) => (
-                <button key={s} onClick={() => setThinkIdx(i)} className={`px-2.5 py-1 rounded text-[10px] font-mono transition-all ${s === thinkStates[thinkIdx] ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-neutral-900 text-neutral-600 border border-neutral-800 hover:border-neutral-700"}`}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </Card>
-        </Section>
-
-        {/* Reasoning Trace */}
-        <Section title="Reasoning Trace" sub="Collapsible chain-of-thought. Auto-opens during streaming, auto-collapses when done.">
-          <Card label="Live streaming reasoning">
-            <ReasoningTrace content={reasoning.content} isStreaming={reasoning.isStreaming} durationSeconds={reasoning.isStreaming ? undefined : 8} />
-          </Card>
-        </Section>
-
-        {/* Streaming Markdown */}
-        <Section title="Streaming Markdown" sub="Renders incomplete markdown without glitches. Unclosed code blocks show a cursor.">
-          <Card label="Markdown with code blocks streaming">
-            <StreamingMarkdown content={md.content} isStreaming={md.isStreaming} className="text-sm text-neutral-300" />
-          </Card>
-        </Section>
-
-        {/* Agent Workflow */}
-        <Section title="Agent Workflow" sub="React Flow-compatible nodes with status animations. Timeline shows live execution.">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Card label="AgentNode">
-              <div className="flex flex-col gap-3 py-1">
-                <AgentNode label="Parse Query" status={ns.p} icon="Q" />
-                <AgentNode label="Search KB" subtitle="vector search" status={ns.s} icon="S" />
-                <AgentNode label="Generate" status={ns.g} icon="G" />
-              </div>
-            </Card>
-            <Card label="AgentTimeline">
-              <AgentTimeline steps={[
-                { id: "1", title: "Parse user query", status: agentStep >= 1 ? "complete" : "running" },
-                { id: "2", title: "Search knowledge base", status: agentStep >= 2 ? "complete" : agentStep === 1 ? "running" : "pending" },
-                { id: "3", title: "Generate response", status: agentStep >= 3 ? "complete" : agentStep === 2 ? "running" : "pending" },
-                { id: "4", title: "Validate output", status: agentStep >= 3 ? "complete" : "pending" },
-              ]} />
-            </Card>
-          </div>
-        </Section>
-
-        {/* Tool Call */}
-        <Section title="Tool Call Card" sub="Tool invocations with expanding results. Shimmer while running, spring expand on complete.">
-          <div className="max-w-md">
-            <ToolCallCard toolName="search_database" icon="DB" args={{ query: "recent orders", limit: 10 }} status={toolStatus} result={toolStatus === "complete" ? <pre className="text-[11px] font-mono text-neutral-400">{JSON.stringify({ results: [{ id: 1, item: "Widget A" }], count: 1 }, null, 2)}</pre> : undefined} />
-          </div>
-        </Section>
-
-        {/* AI Glow */}
-        <Section title="AI Glow" sub="Ambient glow responding to AI state. Thinking pulses, error shifts red.">
-          <Card label="Click states to change glow">
-            <div className="relative rounded-lg overflow-hidden" style={{ height: 160 }}>
-              <AIGlow state={glowState} intensity={0.7}>
-                <div className="flex items-center justify-center h-full">
-                  <span className="text-neutral-500 text-sm font-mono">&quot;{glowState}&quot;</span>
-                </div>
-              </AIGlow>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {(["idle", "thinking", "deep-thinking", "streaming", "complete", "error"] as AIState[]).map((s) => (
-                <button key={s} onClick={() => setGlowState(s)} className={`px-2.5 py-1 rounded text-[10px] font-mono transition-all ${s === glowState ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "bg-neutral-900 text-neutral-600 border border-neutral-800 hover:border-neutral-700"}`}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </Card>
-        </Section>
-
-        {/* Animated Tabs */}
-        <Section title="Animated Tabs" sub="Sliding indicator with content cross-fade. Perfect for AI output modes.">
-          <Card label="AnimatedTabs">
-            <AnimatedTabs tabs={[{ id: "response", label: "Response" }, { id: "code", label: "Code" }, { id: "preview", label: "Preview" }]} activeTab={activeTab} onTabChange={setActiveTab}>
-              <div className="p-4 text-sm text-neutral-400 min-h-[60px]">
-                {activeTab === "response" && "The AI response with streaming text would appear here..."}
-                {activeTab === "code" && <pre className="font-mono text-xs text-green-400">{"function hello() {\n  return 'world';\n}"}</pre>}
-                {activeTab === "preview" && "Live preview of the generated component."}
-              </div>
-            </AnimatedTabs>
-          </Card>
-        </Section>
-
-        {/* Data */}
-        <Section title="Data & Feedback" sub="Progress rings and token counters with spring-animated numbers.">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Card label="ProgressRing">
-              <div className="flex justify-center py-4">
-                <ProgressRing progress={Math.min(progress, 100)} currentStep={Math.ceil(Math.min(progress, 100) / 20)} totalSteps={5} size={72} strokeWidth={5} />
-              </div>
-            </Card>
-            <Card label="TokenCounter">
-              <div className="py-4">
-                <TokenCounter value={Math.min(tokens, 4096)} max={4096} label="tokens" />
-              </div>
-            </Card>
-            <Card label="CopyButton">
-              <div className="flex items-center gap-3 py-4">
-                <code className="text-[10px] text-neutral-500 bg-neutral-900 px-2 py-1.5 rounded font-mono truncate">npx shadcn add streaming-text</code>
-                <CopyButton value="npx shadcn@latest add https://uiforai.dev/r/streaming-text.json" />
-              </div>
-            </Card>
-          </div>
-        </Section>
+      {/* Component showcases */}
+      <div className="relative max-w-4xl mx-auto px-6 py-20" style={{ zIndex: 1 }}>
+        <StreamingShowcase />
+        <ThinkingShowcase />
+        <ReasoningShowcase />
+        <MarkdownShowcase />
+        <AgentShowcase />
+        <ToolCallShowcase />
+        <GlowShowcase />
+        <TabsShowcase />
+        <DataShowcase />
 
         {/* Footer */}
-        <div className="mt-16 text-center border-t border-neutral-900 pt-10 pb-6">
-          <p className="text-neutral-500 text-sm mb-1">Built for the humans building AI.</p>
-          <p className="text-neutral-700 text-xs">Agents don&apos;t need UI. You do.</p>
+        <div className="mt-24 text-center pt-12 pb-8">
+          <div className="h-px mx-auto max-w-xs mb-12" style={{ background: "linear-gradient(90deg, transparent, oklch(0.20 0.01 260 / 0.4), transparent)" }} />
+          <p className="text-[14px] mb-1" style={{ color: "oklch(0.45 0.01 260)" }}>
+            Built for the humans building AI.
+          </p>
+          <p className="text-[12px]" style={{ color: "oklch(0.28 0.01 260)" }}>
+            Agents don&apos;t need UI. You do.
+          </p>
         </div>
       </div>
     </div>

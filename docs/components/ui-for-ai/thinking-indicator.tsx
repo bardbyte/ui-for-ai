@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import type { AIState } from "@/hooks/use-ai-state";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
@@ -26,141 +26,208 @@ const defaultLabels: Record<AIState, string> = {
 };
 
 const sizes = {
-  sm: { orb: 4, gap: 3, container: 24, fontSize: 11 },
-  md: { orb: 6, gap: 4, container: 32, fontSize: 13 },
-  lg: { orb: 8, gap: 5, container: 40, fontSize: 15 },
+  sm: { diameter: 24, fontSize: 11, gap: 8 },
+  md: { diameter: 36, fontSize: 13, gap: 10 },
+  lg: { diameter: 48, fontSize: 15, gap: 12 },
 };
 
-const stateColors: Record<AIState, string> = {
-  idle: "oklch(0.6 0 0)",
-  thinking: "oklch(0.7 0.15 250)",
-  "deep-thinking": "oklch(0.65 0.2 280)",
-  "tool-calling": "oklch(0.7 0.15 180)",
-  streaming: "oklch(0.7 0.12 250)",
-  complete: "oklch(0.7 0.15 145)",
-  error: "oklch(0.65 0.2 25)",
+const stateGlowColors: Record<AIState, string> = {
+  idle: "oklch(0.5 0 0 / 0.1)",
+  thinking: "oklch(0.72 0.14 250 / 0.3)",
+  "deep-thinking": "oklch(0.65 0.20 280 / 0.4)",
+  "tool-calling": "oklch(0.78 0.12 200 / 0.3)",
+  streaming: "oklch(0.72 0.14 250 / 0.2)",
+  complete: "oklch(0.72 0.16 155 / 0.3)",
+  error: "oklch(0.65 0.22 25 / 0.3)",
 };
 
-const spring = { type: "spring" as const, stiffness: 300, damping: 20 };
+/**
+ * The orb — a single multi-layered glassmorphic element that morphs between states.
+ * Not three bouncing dots. A living, breathing indicator.
+ */
+function Orb({ state, diameter }: { state: AIState; diameter: number }) {
+  const isActive = state !== "idle" && state !== "complete" && state !== "error";
 
-function Orb({
-  index,
-  state,
-  size,
-}: {
-  index: number;
-  state: AIState;
-  size: "sm" | "md" | "lg";
-}) {
-  const s = sizes[size];
-  const color = stateColors[state];
+  // Core rotation speed varies by state
+  const coreSpeed = state === "deep-thinking" ? 4 : state === "tool-calling" ? 0 : 8;
+  const fluidSpeed = state === "deep-thinking" ? 6 : 12;
 
-  const orbStyle = {
-    width: s.orb,
-    height: s.orb,
-    borderRadius: "50%",
-    background: color,
-  };
-
-  switch (state) {
-    case "idle":
-      return <motion.div style={{ ...orbStyle, opacity: 0.3 }} />;
-
-    case "thinking":
-      return (
+  return (
+    <motion.div
+      animate={
+        state === "deep-thinking"
+          ? { scale: [1, 1.08, 1] }
+          : state === "streaming"
+            ? { scaleX: [1, 1.12, 1], scaleY: [1, 0.92, 1] }
+            : { scale: 1 }
+      }
+      transition={
+        state === "deep-thinking"
+          ? { duration: 2, repeat: Infinity, ease: "easeInOut" as const }
+          : state === "streaming"
+            ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" as const }
+            : { type: "spring" as const, stiffness: 300, damping: 20 }
+      }
+      style={{
+        position: "relative",
+        width: diameter,
+        height: diameter,
+        borderRadius: 9999,
+        // Glassmorphic shell
+        background: "linear-gradient(135deg, oklch(0.18 0.01 260 / 0.7), oklch(0.12 0.005 260 / 0.5))",
+        backdropFilter: "blur(12px)",
+        border: "1px solid oklch(0.30 0.02 260 / 0.3)",
+        overflow: "hidden",
+        flexShrink: 0,
+      }}
+    >
+      {/* Inner core — radial gradient, rotates */}
+      {isActive && (
         <motion.div
-          style={orbStyle}
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.6, 1, 0.6],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            delay: index * 0.2,
-            ease: "easeInOut",
-          }}
-        />
-      );
-
-    case "deep-thinking":
-      return (
-        <motion.div
+          animate={{ rotate: 360 }}
+          transition={coreSpeed > 0 ? { duration: coreSpeed, repeat: Infinity, ease: "linear" } : undefined}
           style={{
-            ...orbStyle,
-            boxShadow: `0 0 ${s.orb * 2}px ${color}`,
-          }}
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.7, 1, 0.7],
-          }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            delay: index * 0.15,
-            ease: "easeInOut",
+            position: "absolute",
+            inset: "20%",
+            borderRadius: 9999,
+            background:
+              "radial-gradient(circle at 40% 35%, oklch(0.72 0.14 250 / 0.9), oklch(0.65 0.20 280 / 0.6) 50%, oklch(0.50 0.10 250 / 0.0) 100%)",
+            filter: "blur(3px)",
           }}
         />
-      );
+      )}
 
-    case "tool-calling":
-      return (
+      {/* Fluid layer — counter-rotating conic gradient */}
+      {isActive && (
         <motion.div
-          style={orbStyle}
-          animate={{
-            opacity: [0.3, 1, 0.3],
-          }}
-          transition={{
-            duration: 0.6,
-            repeat: Infinity,
-            delay: index * 0.2,
-            ease: "linear",
+          animate={{ rotate: -360 }}
+          transition={{ duration: fluidSpeed, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute",
+            inset: "15%",
+            borderRadius: 9999,
+            background:
+              "conic-gradient(from 0deg, oklch(0.78 0.12 200 / 0.0), oklch(0.72 0.14 250 / 0.5), oklch(0.65 0.20 280 / 0.5), oklch(0.78 0.12 200 / 0.0))",
+            filter: "blur(4px)",
+            mixBlendMode: "screen",
           }}
         />
-      );
+      )}
 
-    case "streaming":
-      return (
+      {/* Tool-calling scan ring */}
+      {state === "tool-calling" && (
         <motion.div
-          style={orbStyle}
-          animate={{
-            y: [0, -s.orb, 0],
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 0.8,
-            repeat: Infinity,
-            delay: index * 0.1,
-            ease: "easeInOut",
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute",
+            inset: -3,
+            borderRadius: 9999,
+            background:
+              "conic-gradient(from 0deg, transparent 0%, oklch(0.78 0.12 200 / 0.6) 30%, transparent 60%)",
           }}
         />
-      );
+      )}
 
-    case "complete":
-      return (
-        <motion.div
-          style={{ ...orbStyle, background: stateColors.complete }}
-          initial={{ scale: 1.5 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={spring}
-        />
-      );
+      {/* Specular highlight — glassy catch light */}
+      <div
+        style={{
+          position: "absolute",
+          top: "8%",
+          left: "15%",
+          width: "40%",
+          height: "25%",
+          borderRadius: 9999,
+          background:
+            "linear-gradient(180deg, oklch(1.0 0 0 / 0.2) 0%, oklch(1.0 0 0 / 0.0) 100%)",
+          filter: "blur(2px)",
+          pointerEvents: "none",
+        }}
+      />
 
-    case "error":
-      return (
-        <motion.div
-          style={{ ...orbStyle, background: stateColors.error }}
-          animate={{ x: [0, -2, 2, -2, 0] }}
-          transition={{ duration: 0.4, repeat: Infinity, repeatDelay: 1 }}
+      {/* Complete state: checkmark */}
+      {state === "complete" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "oklch(0.72 0.16 155 / 0.15)",
+          }}
+        >
+          <motion.svg
+            width={diameter * 0.45}
+            height={diameter * 0.45}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="oklch(0.72 0.16 155)"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <motion.polyline
+              points="20 6 9 17 4 12"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" as const }}
+            />
+          </motion.svg>
+        </div>
+      )}
+
+      {/* Error state: X mark + red tint */}
+      {state === "error" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "oklch(0.65 0.22 25 / 0.15)",
+          }}
+        >
+          <svg
+            width={diameter * 0.4}
+            height={diameter * 0.4}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="oklch(0.65 0.22 25)"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </div>
+      )}
+
+      {/* Idle state: dim static orb */}
+      {state === "idle" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: "30%",
+            borderRadius: 9999,
+            background: "oklch(0.4 0.02 260 / 0.3)",
+            filter: "blur(2px)",
+          }}
         />
-      );
-  }
+      )}
+    </motion.div>
+  );
 }
 
 /**
- * Multi-state AI processing indicator with 7 semantic states.
- * Not bouncing dots — a sophisticated state-machine-driven animation
- * with smooth transitions between states.
+ * Multi-layered glassmorphic AI processing indicator.
+ *
+ * A single orb with rotating inner layers, specular highlights,
+ * and state-specific morphing. Thinking rotates slowly, deep-thinking
+ * breathes, tool-calling shows a scanning sweep, streaming elongates
+ * into a pill, complete draws a checkmark, error shakes red.
  */
 export function ThinkingIndicator({
   state,
@@ -178,7 +245,6 @@ export function ThinkingIndicator({
 
   if (state === "idle" && !label) return null;
 
-  // Reduced motion: text label only
   if (prefersReduced) {
     return (
       <div
@@ -188,9 +254,9 @@ export function ThinkingIndicator({
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 8,
+          gap: s.gap,
           fontSize: s.fontSize,
-          color: stateColors[state],
+          color: "oklch(0.7 0.1 250)",
         }}
       >
         {state === "complete" && <span>&#10003;</span>}
@@ -208,56 +274,45 @@ export function ThinkingIndicator({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
+        gap: s.gap,
       }}
     >
-      {/* Orbs */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: s.gap,
-          height: s.container,
-          justifyContent: "center",
-          minWidth: s.container,
-        }}
-      >
+      {/* Outer glow */}
+      <div style={{ position: "relative" }}>
+        <motion.div
+          animate={{
+            opacity:
+              state === "idle" ? 0 :
+              state === "complete" ? [0.2, 0] :
+              state === "deep-thinking" ? [0.2, 0.45, 0.2] :
+              [0.15, 0.3, 0.15],
+            scale:
+              state === "deep-thinking" ? [1, 1.3, 1] :
+              [1, 1.1, 1],
+          }}
+          transition={{
+            duration: state === "deep-thinking" ? 2 : 3,
+            repeat: state === "complete" ? 0 : Infinity,
+            ease: "easeInOut" as const,
+          }}
+          style={{
+            position: "absolute",
+            inset: -(s.diameter * 0.4),
+            borderRadius: 9999,
+            background: stateGlowColors[state],
+            filter: `blur(${s.diameter * 0.5}px)`,
+            pointerEvents: "none",
+          }}
+        />
         <AnimatePresence mode="wait">
           <motion.div
             key={state}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: s.gap,
-            }}
+            initial={{ scale: 0.9, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
-            {state === "complete" ? (
-              <motion.svg
-                width={s.container * 0.6}
-                height={s.container * 0.6}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={stateColors.complete}
-                strokeWidth={3}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <motion.polyline
-                  points="20 6 9 17 4 12"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-              </motion.svg>
-            ) : (
-              [0, 1, 2].map((i) => (
-                <Orb key={i} index={i} state={state} size={size} />
-              ))
-            )}
+            <Orb state={state} diameter={s.diameter} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -267,14 +322,15 @@ export function ThinkingIndicator({
         {label && (
           <motion.span
             key={label}
-            initial={{ opacity: 0, x: -4 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 4 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, x: -4, filter: "blur(4px)" }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, x: 4, filter: "blur(4px)" }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] as const }}
             style={{
               fontSize: s.fontSize,
-              color: stateColors[state],
+              color: "oklch(0.6 0.01 260)",
               whiteSpace: "nowrap",
+              letterSpacing: "0.01em",
             }}
           >
             {label}

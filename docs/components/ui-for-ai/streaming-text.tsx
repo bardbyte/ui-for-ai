@@ -8,8 +8,14 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 export interface StreamingTextProps {
   /** The text content. Can be progressively updated (streaming). */
   content: string;
-  /** Animation mode for token reveal. Defaults to "fade". */
-  mode?: "fade" | "blur-in" | "slide-up" | "typewriter";
+  /**
+   * Animation mode for token reveal.
+   * - "luminous" (default): Text materializes with a glowing wavefront
+   * - "fade": Soft fade with subtle blur
+   * - "blur-in": Deep blur-to-sharp with vertical shift
+   * - "slide-up": Spring-based slide with scale
+   */
+  mode?: "luminous" | "fade" | "blur-in" | "slide-up";
   /** Tokens per second for visual smoothing. Defaults to 40. */
   speed?: number;
   /** Whether content is still streaming. */
@@ -21,48 +27,86 @@ export interface StreamingTextProps {
   className?: string;
 }
 
+// --- Premium animation configs ---
+
+const GLOW_TRAIL_LENGTH = 4; // Number of trailing tokens that carry the glow
+
 const modeVariants = {
-  fade: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
+  luminous: {
+    hidden: {
+      opacity: 0,
+      filter: "blur(8px)",
+    },
+    settling: {
+      opacity: 0.9,
+      filter: "blur(0.5px)",
+    },
+    visible: {
+      opacity: 1,
+      filter: "blur(0px)",
+    },
   },
-  "blur-in": {
-    hidden: { opacity: 0, filter: "blur(4px)" },
+  fade: {
+    hidden: { opacity: 0, filter: "blur(2px)" },
     visible: { opacity: 1, filter: "blur(0px)" },
   },
-  "slide-up": {
-    hidden: { opacity: 0, y: 4 },
-    visible: { opacity: 1, y: 0 },
+  "blur-in": {
+    hidden: { opacity: 0, filter: "blur(12px)", y: 6 },
+    visible: { opacity: 1, filter: "blur(0px)", y: 0 },
   },
-  typewriter: {
-    hidden: { opacity: 0, width: 0 },
-    visible: { opacity: 1, width: "auto" },
+  "slide-up": {
+    hidden: { opacity: 0, y: 8, scale: 0.96 },
+    visible: { opacity: 1, y: 0, scale: 1 },
   },
 } as const;
 
 const modeTransitions = {
-  fade: { duration: 0.3, ease: "easeOut" as const },
-  "blur-in": { duration: 0.4, ease: "easeOut" as const },
+  luminous: {
+    duration: 0.15,
+    ease: [0.16, 1, 0.3, 1] as const, // Apple ease-out
+  },
+  fade: {
+    duration: 0.25,
+    ease: [0.16, 1, 0.3, 1] as const,
+  },
+  "blur-in": {
+    duration: 0.35,
+    ease: [0.16, 1, 0.3, 1] as const,
+  },
   "slide-up": {
     type: "spring" as const,
-    stiffness: 400,
-    damping: 30,
+    stiffness: 350,
+    damping: 22,
   },
-  typewriter: { duration: 0.15, ease: "easeOut" as const },
+};
+
+// The luminous glow style for "settling" tokens (last N tokens)
+const settlingStyle = {
+  color: "oklch(0.93 0.12 250)",
+  textShadow:
+    "0 0 20px oklch(0.72 0.14 250 / 0.4), 0 0 40px oklch(0.72 0.14 250 / 0.12)",
+};
+
+// Settled token style (glow faded)
+const settledStyle = {
+  color: "inherit",
+  textShadow: "none",
+  transition: "color 0.6s cubic-bezier(0.76, 0, 0.24, 1), text-shadow 0.6s cubic-bezier(0.76, 0, 0.24, 1)",
 };
 
 /**
- * Token-by-token text reveal with multiple animation modes.
+ * Token-by-token text reveal with premium animation modes.
+ *
+ * The default "luminous" mode creates a glowing wavefront: the last few
+ * tokens carry a blue luminous glow that fades as they settle. Text feels
+ * like it materializes from light, not just appears.
  *
  * Decouples network jitter from visual presentation using an internal
- * streaming buffer. Tokens arriving in bursts are visually staggered;
- * network pauses produce natural visual pauses.
- *
- * Compatible with Vercel AI SDK — pass content from useChat().
+ * streaming buffer. Compatible with Vercel AI SDK useChat().
  */
 export function StreamingText({
   content,
-  mode = "fade",
+  mode = "luminous",
   speed = 40,
   isStreaming = true,
   onComplete,
@@ -78,12 +122,10 @@ export function StreamingText({
     delimiter: byCharacter ? "" : " ",
   });
 
-  // Push new content into the buffer as it streams in
   useEffect(() => {
     push(content);
   }, [content, push]);
 
-  // Fire onComplete when streaming ends and buffer is drained
   useEffect(() => {
     if (!isStreaming && !isBuffering && !completeFiredRef.current && displayedTokens.length > 0) {
       completeFiredRef.current = true;
@@ -91,7 +133,6 @@ export function StreamingText({
     }
   }, [isStreaming, isBuffering, displayedTokens.length, onComplete]);
 
-  // Reset complete flag when content is cleared
   useEffect(() => {
     if (content === "") {
       completeFiredRef.current = false;
@@ -99,25 +140,28 @@ export function StreamingText({
     }
   }, [content, reset]);
 
-  const variants = modeVariants[mode];
+  const isLuminous = mode === "luminous";
+  const variants = isLuminous
+    ? { hidden: modeVariants.luminous.hidden, visible: modeVariants.luminous.settling }
+    : modeVariants[mode];
   const transition = modeTransitions[mode];
 
-  // Determine which tokens are new (need animation) vs already displayed
   const tokenElements = useMemo(() => {
     const prevCount = prevTokenCountRef.current;
+    const total = displayedTokens.length;
     return displayedTokens.map((token, i) => ({
       token,
       index: i,
       isNew: i >= prevCount,
+      // For luminous mode: is this token in the glowing trail?
+      isSettling: isLuminous && i >= total - GLOW_TRAIL_LENGTH,
     }));
-  }, [displayedTokens]);
+  }, [displayedTokens, isLuminous]);
 
-  // Update prevTokenCount after render
   useEffect(() => {
     prevTokenCountRef.current = displayedTokens.length;
   }, [displayedTokens.length]);
 
-  // If user prefers reduced motion, show all tokens instantly
   if (prefersReduced) {
     return (
       <p className={className} aria-live="polite">
@@ -127,11 +171,12 @@ export function StreamingText({
             aria-hidden="true"
             style={{
               display: "inline-block",
-              width: 2,
-              height: "1em",
-              marginLeft: 2,
-              background: "currentColor",
-              opacity: 0.5,
+              width: 3,
+              height: "1.1em",
+              marginLeft: 4,
+              borderRadius: 2,
+              background: "oklch(0.72 0.14 250)",
+              opacity: 0.6,
               verticalAlign: "text-bottom",
             }}
           />
@@ -144,54 +189,71 @@ export function StreamingText({
     <p
       className={className}
       aria-live="polite"
-      style={{ lineHeight: 1.7, overflowWrap: "break-word" }}
+      style={{ lineHeight: 1.75, overflowWrap: "break-word" }}
     >
-      {tokenElements.map(({ token, index, isNew }) =>
-        isNew ? (
-          <motion.span
-            key={`${index}-${token}`}
-            initial="hidden"
-            animate="visible"
-            variants={variants}
-            transition={transition}
-            style={{
-              display: "inline-block",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {token}
-            {!byCharacter && index < displayedTokens.length - 1 ? "\u00A0" : ""}
-          </motion.span>
-        ) : (
+      {tokenElements.map(({ token, index, isNew, isSettling }) => {
+        const separator =
+          !byCharacter && index < displayedTokens.length - 1 ? "\u00A0" : "";
+
+        if (isNew) {
+          return (
+            <motion.span
+              key={`${index}-${token}`}
+              initial="hidden"
+              animate="visible"
+              variants={variants}
+              transition={transition}
+              style={{
+                display: "inline-block",
+                whiteSpace: "pre-wrap",
+                ...(isSettling ? settlingStyle : {}),
+              }}
+            >
+              {token}
+              {separator}
+            </motion.span>
+          );
+        }
+
+        // Already rendered tokens
+        return (
           <span
             key={`${index}-${token}`}
             style={{
               display: "inline-block",
               whiteSpace: "pre-wrap",
+              ...(isSettling ? settlingStyle : settledStyle),
             }}
           >
             {token}
-            {!byCharacter && index < displayedTokens.length - 1 ? "\u00A0" : ""}
+            {separator}
           </span>
-        ),
-      )}
-      {/* Blinking cursor during streaming */}
+        );
+      })}
+
+      {/* Premium breathing cursor */}
       {isStreaming && (
         <motion.span
           aria-hidden="true"
-          animate={{ opacity: [1, 0] }}
+          animate={{
+            opacity: [1, 0.4, 1],
+            scaleY: [1, 0.92, 1],
+          }}
           transition={{
-            duration: 0.8,
+            duration: 1.2,
             repeat: Infinity,
-            repeatType: "reverse",
+            ease: "easeInOut" as const,
           }}
           style={{
             display: "inline-block",
-            width: 2,
-            height: "1em",
-            marginLeft: 2,
-            background: "currentColor",
+            width: 3,
+            height: "1.1em",
+            marginLeft: 4,
+            borderRadius: 2,
+            background: "oklch(0.72 0.14 250)",
             verticalAlign: "text-bottom",
+            boxShadow:
+              "0 0 8px oklch(0.72 0.14 250 / 0.6), 0 0 24px oklch(0.72 0.14 250 / 0.25)",
           }}
         />
       )}

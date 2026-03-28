@@ -342,6 +342,141 @@
           "target": "components/ui-for-ai/voice-waveform.tsx"
         }
       ]
+    },
+    {
+      "name": "chat-layout",
+      "type": "registry:ui",
+      "title": "Chat Layout",
+      "description": "Full composable chat interface with auto-scroll, auto-resize input, scroll-to-bottom button, and typing indicator.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/chat-layout.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/chat-layout.tsx"
+        }
+      ]
+    },
+    {
+      "name": "empty-state",
+      "type": "registry:ui",
+      "title": "Empty State",
+      "description": "Empty state for no-data, no-results, error, first-run, and offline. Variant-specific icons and colors.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/empty-state.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/empty-state.tsx"
+        }
+      ]
+    },
+    {
+      "name": "error-state",
+      "type": "registry:ui",
+      "title": "Error State",
+      "description": "Graceful error display with variant-specific messaging, retry button, and collapsible technical details.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/error-state.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/error-state.tsx"
+        }
+      ]
+    },
+    {
+      "name": "skeleton-block",
+      "type": "registry:ui",
+      "title": "Skeleton Block",
+      "description": "AI-aware loading skeletons matching common content types: message, code, markdown, card, table-row.",
+      "dependencies": [],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/skeleton-block.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/skeleton-block.tsx"
+        }
+      ]
+    },
+    {
+      "name": "citation-card",
+      "type": "registry:ui",
+      "title": "Citation Card",
+      "description": "Inline citation marker that expands to show retrieved source chunk with relevance score. Essential for RAG.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/citation-card.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/citation-card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "source-panel",
+      "type": "registry:ui",
+      "title": "Source Panel",
+      "description": "Slide-in side panel showing all retrieved RAG sources with relevance scores and chunk previews.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/source-panel.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/source-panel.tsx"
+        }
+      ]
+    },
+    {
+      "name": "message-branch",
+      "type": "registry:ui",
+      "title": "Message Branch",
+      "description": "Response regeneration navigation with Previous/Next and cross-fade between branches.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/message-branch.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/message-branch.tsx"
+        }
+      ]
+    },
+    {
+      "name": "approval-card",
+      "type": "registry:ui",
+      "title": "Approval Card",
+      "description": "Human-in-the-loop approval card. Agent proposes action, user approves or rejects with impact level and cost.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/approval-card.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/approval-card.tsx"
+        }
+      ]
+    },
+    {
+      "name": "code-artifact",
+      "type": "registry:ui",
+      "title": "Code Artifact",
+      "description": "Live code preview panel inspired by Claude Artifacts. Code + preview tabs, line numbers, copy, download.",
+      "dependencies": ["motion"],
+      "registryDependencies": ["use-reduced-motion"],
+      "files": [
+        {
+          "path": "registry/ui/code-artifact.tsx",
+          "type": "registry:ui",
+          "target": "components/ui-for-ai/code-artifact.tsx"
+        }
+      ]
     }
   ]
 }
